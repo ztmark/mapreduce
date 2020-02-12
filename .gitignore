@@ -1,0 +1,7 @@
+# Created by .ignore support plugin (hsz.mobi)
+### simple template
+target/
+.idea
+*.iml
+
+out/
