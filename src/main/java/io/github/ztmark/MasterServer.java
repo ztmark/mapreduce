@@ -3,6 +3,8 @@ package io.github.ztmark;
 import java.net.InetSocketAddress;
 
 import io.netty.bootstrap.ServerBootstrap;
+import io.netty.channel.ChannelFuture;
+import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.nio.NioEventLoopGroup;
@@ -15,7 +17,7 @@ import io.netty.channel.socket.nio.NioServerSocketChannel;
  */
 public class MasterServer {
 
-    public MasterServer() {
+    public MasterServer() throws InterruptedException {
         final ServerBootstrap bootstrap = new ServerBootstrap();
         final NioEventLoopGroup boss = new NioEventLoopGroup(1, new NamedThreadFactory("Master-Boss"));
         final NioEventLoopGroup worker = new NioEventLoopGroup(Runtime.getRuntime().availableProcessors(), new NamedThreadFactory("Master-Worker"));
@@ -31,9 +33,12 @@ public class MasterServer {
                  .childHandler(new ChannelInitializer<SocketChannel>() {
                      @Override
                      protected void initChannel(SocketChannel ch) throws Exception {
-                         ch.pipeline().addLast(new NettyEncoder(), new NettyDecoder());
+                         ch.pipeline().addLast(new NettyEncoder(), new NettyDecoder(), new HeartBeatHandler());
                      }
                  });
+        final ChannelFuture future = bootstrap.bind().sync();
+        future.addListener(ChannelFutureListener.CLOSE_ON_FAILURE);
+        System.out.println("master start at 8000");
     }
 
 

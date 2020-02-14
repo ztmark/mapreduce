@@ -6,13 +6,19 @@ package io.github.ztmark;
  */
 public class Master {
 
+    private MasterServer server;
+    private String[] files;
+    private int reduceNum;
+    private volatile boolean done = false;
 
-    public Master(String[] files, int reduceNum) {
-
+    public Master(String[] files, int reduceNum) throws InterruptedException {
+        this.files = files;
+        this.reduceNum = reduceNum;
+        server = new MasterServer();
     }
 
     public boolean isDone() {
-        return false;
+        return done;
     }
 
 

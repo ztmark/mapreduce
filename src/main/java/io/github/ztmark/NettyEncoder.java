@@ -11,7 +11,12 @@ import io.netty.handler.codec.MessageToByteEncoder;
 public class NettyEncoder extends MessageToByteEncoder<Command> {
     @Override
     protected void encode(ChannelHandlerContext ctx, Command msg, ByteBuf out) throws Exception {
-        final ByteBuf encode = msg.encode();
-        out.writeBytes(encode);
+        try {
+            final ByteBuf encode = msg.encode();
+            out.writeBytes(encode);
+        } catch (Exception e) {
+            e.printStackTrace();
+            ctx.channel().close();
+        }
     }
 }
