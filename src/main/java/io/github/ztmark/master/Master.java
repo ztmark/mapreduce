@@ -1,4 +1,4 @@
-package io.github.ztmark;
+package io.github.ztmark.master;
 
 /**
  * @Author: Mark
@@ -15,6 +15,7 @@ public class Master {
         this.files = files;
         this.reduceNum = reduceNum;
         server = new MasterServer();
+        server.start();
     }
 
     public boolean isDone() {

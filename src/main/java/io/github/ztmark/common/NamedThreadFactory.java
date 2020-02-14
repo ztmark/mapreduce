@@ -1,4 +1,4 @@
-package io.github.ztmark;
+package io.github.ztmark.common;
 
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicInteger;

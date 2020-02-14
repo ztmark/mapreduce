@@ -1,4 +1,4 @@
-package io.github.ztmark;
+package io.github.ztmark.common;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
@@ -24,10 +24,12 @@ public class Command {
         final Command command = new Command();
         command.code = byteBuf.readInt();
         switch (command.code) {
-            case 0: {
-                command.body = new HeartBeat();
-                command.body.decode(byteBuf);
-            }
+            case CommandCode.HEART_BEAT:
+                command.body = HeartBeat.decode(byteBuf);
+                break;
+            case CommandCode.REGISTRATION:
+                command.body = Registration.decode(byteBuf);
+                break;
         }
         return command;
     }

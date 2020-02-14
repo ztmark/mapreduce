@@ -1,4 +1,4 @@
-package io.github.ztmark;
+package io.github.ztmark.common;
 
 /**
  * @Author: Mark

@@ -1,5 +1,14 @@
-package io.github.ztmark;
+package io.github.ztmark.worker;
 
+import java.util.logging.Logger;
+
+import io.github.ztmark.common.Command;
+import io.github.ztmark.common.CommandCode;
+import io.github.ztmark.common.HeartBeat;
+import io.github.ztmark.common.NamedThreadFactory;
+import io.github.ztmark.common.NettyDecoder;
+import io.github.ztmark.common.NettyEncoder;
+import io.github.ztmark.common.Registration;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelInitializer;
@@ -13,6 +22,8 @@ import io.netty.channel.socket.nio.NioSocketChannel;
  * @Date : 2020/2/14
  */
 public class WorkerClient {
+
+    private Logger logger = Logger.getLogger(Worker.class.getName());
 
     private Bootstrap bootstrap;
     private NioEventLoopGroup workerGroup;
@@ -32,10 +43,23 @@ public class WorkerClient {
                      }
                  });
         channelFuture = bootstrap.connect("localhost", 8000);
-        System.out.println("connect to master");
+        logger.info("connect to master");
     }
 
-    public void sendHeartBeat(Command command) {
-        channelFuture.channel().writeAndFlush(command);
+    public boolean register(String workerId) throws InterruptedException {
+        final Registration registration = new Registration(workerId);
+        return sendCommand(new Command(CommandCode.REGISTRATION, registration));
+    }
+
+    public void sendHeartBeat(HeartBeat heartBeat) throws InterruptedException {
+        sendCommand(new Command(CommandCode.HEART_BEAT, heartBeat));
+    }
+
+    private boolean sendCommand(Command command) throws InterruptedException {
+        if (channelFuture != null && channelFuture.channel().isWritable()) {
+            channelFuture.channel().writeAndFlush(command).sync();
+            return true;
+        }
+        return false;
     }
 }

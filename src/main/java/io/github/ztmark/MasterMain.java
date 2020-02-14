@@ -2,6 +2,8 @@ package io.github.ztmark;
 
 import java.util.concurrent.TimeUnit;
 
+import io.github.ztmark.master.Master;
+
 /**
  * @Author: Mark
  * @Date : 2020/2/13

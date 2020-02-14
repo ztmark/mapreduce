@@ -1,4 +1,4 @@
-package io.github.ztmark;
+package io.github.ztmark.common;
 
 import java.nio.charset.StandardCharsets;
 
@@ -11,10 +11,10 @@ import io.netty.buffer.Unpooled;
  */
 public class HeartBeat implements CommandBody {
 
-    private String content;
+    private String workerId;
 
-    public HeartBeat(String content) {
-        this.content = content;
+    public HeartBeat(String workerId) {
+        this.workerId = workerId;
     }
 
     public HeartBeat() {
@@ -23,24 +23,24 @@ public class HeartBeat implements CommandBody {
     @Override
     public ByteBuf encode() {
         final ByteBuf buffer = Unpooled.buffer();
-        if (content != null) {
-            buffer.writeBytes(content.getBytes(StandardCharsets.UTF_8));
+        if (workerId != null) {
+            buffer.writeBytes(workerId.getBytes(StandardCharsets.UTF_8));
         }
         return buffer;
     }
 
-    @Override
-    public void decode(ByteBuf byteBuf) {
+    public static HeartBeat decode(ByteBuf byteBuf) {
+        final HeartBeat heartBeat = new HeartBeat();
         final int len = byteBuf.readableBytes();
         if (len > 0) {
             byte[] bytes = new byte[len];
             byteBuf.readBytes(bytes);
-            this.content = new String(bytes, StandardCharsets.UTF_8);
+            heartBeat.workerId = new String(bytes, StandardCharsets.UTF_8);
         }
-
+        return heartBeat;
     }
 
-    public String getContent() {
-        return content;
+    public String getWorkerId() {
+        return workerId;
     }
 }

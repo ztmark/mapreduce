@@ -1,4 +1,4 @@
-package io.github.ztmark;
+package io.github.ztmark.common;
 
 import io.netty.buffer.ByteBuf;
 
@@ -10,5 +10,4 @@ public interface CommandBody {
 
     ByteBuf encode();
 
-    void decode(ByteBuf byteBuf);
 }
