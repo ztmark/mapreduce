@@ -11,6 +11,7 @@ import io.github.ztmark.master.Master;
 public class MasterMain {
 
     public static void main(String[] args) throws InterruptedException {
+        args = new String[]{"a", "b", "c"};
         final Master master = new Master(args, 10);
         while (!master.isDone()) {
             TimeUnit.SECONDS.sleep(1);

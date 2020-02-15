@@ -9,6 +9,7 @@ import io.netty.buffer.Unpooled;
  */
 public class Command {
 
+    private int commandId;
     protected int code;
     private CommandBody body;
 
@@ -22,6 +23,7 @@ public class Command {
 
     public static Command decode(ByteBuf byteBuf) {
         final Command command = new Command();
+        command.commandId = byteBuf.readInt();
         command.code = byteBuf.readInt();
         switch (command.code) {
             case CommandCode.HEART_BEAT:
@@ -30,6 +32,11 @@ public class Command {
             case CommandCode.REGISTRATION:
                 command.body = Registration.decode(byteBuf);
                 break;
+            case CommandCode.FETCH_JOB:
+                command.body = FetchJob.decode(byteBuf);
+                break;
+            case CommandCode.FETCH_JOB_RESP:
+                command.body = FetchJobResp.decode(byteBuf);
         }
         return command;
     }
@@ -37,10 +44,19 @@ public class Command {
     public ByteBuf encode() {
         final ByteBuf buffer = Unpooled.buffer();
         final ByteBuf encode = body.encode();
-        buffer.writeInt(encode.readableBytes() + 4);
+        buffer.writeInt(encode.readableBytes() + 8);
+        buffer.writeInt(commandId);
         buffer.writeInt(code);
         buffer.writeBytes(encode);
         return buffer;
+    }
+
+    public int getCommandId() {
+        return commandId;
+    }
+
+    public void setCommandId(int commandId) {
+        this.commandId = commandId;
     }
 
     public int getCode() {
@@ -49,5 +65,15 @@ public class Command {
 
     public CommandBody getBody() {
         return body;
+    }
+
+    @Override
+    public String toString() {
+        final StringBuilder sb = new StringBuilder("Command{");
+        sb.append("commandId=").append(commandId);
+        sb.append(", code=").append(code);
+        sb.append(", body=").append(body);
+        sb.append('}');
+        return sb.toString();
     }
 }

@@ -10,4 +10,7 @@ public final class CommandCode {
 
     public static final int REGISTRATION = 1;
 
+    public static final int FETCH_JOB = 2;
+    public static final int FETCH_JOB_RESP = 3;
+
 }

@@ -3,8 +3,12 @@ package io.github.ztmark.master;
 import java.util.logging.Logger;
 
 import io.github.ztmark.common.Command;
+import io.github.ztmark.common.CommandBody;
 import io.github.ztmark.common.CommandCode;
+import io.github.ztmark.common.FetchJob;
+import io.github.ztmark.common.FetchJobResp;
 import io.github.ztmark.common.HeartBeat;
+import io.github.ztmark.common.Job;
 import io.github.ztmark.common.Registration;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
@@ -17,10 +21,10 @@ public class CommandHandler extends SimpleChannelInboundHandler<Command> {
 
     private Logger logger = Logger.getLogger(HeartBeat.class.getName());
 
-    private MasterServer masterServer;
+    private Master master;
 
-    public CommandHandler(MasterServer masterServer) {
-        this.masterServer = masterServer;
+    public CommandHandler(Master master) {
+        this.master = master;
     }
 
     @Override
@@ -35,15 +39,27 @@ public class CommandHandler extends SimpleChannelInboundHandler<Command> {
                 break;
             case CommandCode.REGISTRATION:
                 processRegistration((Registration) command.getBody(), ctx);
+                break;
+            case CommandCode.FETCH_JOB:
+                processFetchJob(command, ctx);
 
         }
     }
 
     public void processHeartBeat(HeartBeat heartBeat) {
-        masterServer.ping(heartBeat.getWorkerId());
+        master.ping(heartBeat.getWorkerId());
     }
 
     public void processRegistration(Registration registration, ChannelHandlerContext ctx) {
-        masterServer.addWorker(registration.getWorkerId(), ctx.channel());
+        master.addWorker(registration.getWorkerId(), ctx.channel());
+    }
+
+    public void processFetchJob(Command command, ChannelHandlerContext ctx) {
+        FetchJob fetchJob = (FetchJob) command.getBody();
+        final Job job = master.fetchJob(fetchJob.getWorkerId());
+        final FetchJobResp fetchJobResp = new FetchJobResp(job);
+        final Command resp = new Command(CommandCode.FETCH_JOB_RESP, fetchJobResp);
+        resp.setCommandId(command.getCommandId());
+        ctx.channel().writeAndFlush(resp);
     }
 }

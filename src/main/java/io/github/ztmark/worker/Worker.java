@@ -4,9 +4,13 @@ import java.util.UUID;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import com.sun.xml.internal.ws.api.FeatureConstructor;
+
+import io.github.ztmark.common.FetchJob;
 import io.github.ztmark.common.HeartBeat;
 import io.github.ztmark.MapReduce;
 import io.github.ztmark.common.Command;
@@ -27,7 +31,9 @@ public class Worker {
             new NamedThreadFactory("worker-scheduler"));
     private WorkerClient client;
 
-    public Worker(MapReduce mapReduce) {
+    private volatile boolean shutdown = false;
+
+    public Worker(MapReduce mapReduce) throws InterruptedException {
         workerId = generateId();
         this.mapReduce = mapReduce;
         this.client = new WorkerClient();
@@ -44,6 +50,19 @@ public class Worker {
                     logger.log(Level.SEVERE, e.getMessage());
                 }
             }, 10, 3000, TimeUnit.MILLISECONDS);
+
+
+            while (!shutdown) {
+                try {
+                    final Command command = client.fetchJob(new FetchJob(workerId));
+                    logger.info("get job " + command);
+                    TimeUnit.SECONDS.sleep(3);
+                } catch (Exception e) {
+                    logger.severe(e.getMessage());
+                }
+            }
+
+
         }
     }
 
