@@ -1,6 +1,10 @@
 package io.github.ztmark;
 
+import java.io.File;
+import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import io.github.ztmark.master.Master;
 
@@ -11,8 +15,14 @@ import io.github.ztmark.master.Master;
 public class MasterMain {
 
     public static void main(String[] args) throws InterruptedException {
-        args = new String[]{"a", "b", "c"};
-        final Master master = new Master(args, 10);
+
+
+        List<String> files = Arrays.asList();
+
+        final String path = MasterMain.class.getClassLoader().getResource("").getPath();
+        files = files.stream().map(f -> path + File.separator + f).collect(Collectors.toList());
+
+        final Master master = new Master(files, 10);
         while (!master.isDone()) {
             TimeUnit.SECONDS.sleep(1);
         }

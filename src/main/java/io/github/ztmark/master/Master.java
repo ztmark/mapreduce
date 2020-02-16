@@ -1,18 +1,16 @@
 package io.github.ztmark.master;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentSkipListSet;
 
 import io.github.ztmark.common.Job;
-import io.github.ztmark.common.NettyDecoder;
-import io.github.ztmark.common.NettyEncoder;
 import io.netty.channel.Channel;
 
 /**
@@ -34,8 +32,8 @@ public class Master {
     private Set<String> idleWorkers;
     private Set<String> workingWorkers;
 
-    public Master(String[] files, int reduceNum) throws InterruptedException {
-        toMapFile = new HashSet<>(Arrays.asList(files));
+    public Master(List<String> files, int reduceNum) throws InterruptedException {
+        toMapFile = new HashSet<>(files);
         mappingFile = new HashSet<>();
         toReduceFile = new HashSet<>();
         reducingFile = new HashSet<>();
