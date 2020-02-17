@@ -15,6 +15,7 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -55,7 +56,7 @@ public class Worker {
     public void start() throws InterruptedException {
 
         if (client.register(workerId)) {
-            scheduler.scheduleAtFixedRate(() -> {
+            final ScheduledFuture<?> heartBeat = scheduler.scheduleAtFixedRate(() -> {
                 try {
                     client.sendHeartBeat(new HeartBeat(workerId));
                     logger.info("send heart beat");
@@ -70,13 +71,17 @@ public class Worker {
                     final Command command = client.fetchJob(new FetchJob(workerId));
                     logger.info("get job " + command);
                     doTheJob(command);
+                    // todo call master job done
                     TimeUnit.SECONDS.sleep(3);
                 } catch (Exception e) {
                     logger.severe(e.getMessage());
                 }
             }
 
-
+            heartBeat.cancel(true);
+            scheduler.shutdownNow();
+            client.stop();
+            logger.info(workerId + " shutdown");
         }
     }
 
@@ -93,12 +98,15 @@ public class Worker {
                             final List<KeyValue> result = mapReduce.map(job.getArg(), content);
                             // hash key 将相同hash值的写到 med-workid-hash 文件中
                             writeInterMediateFile(result);
-                        } else {
+                        } else if (jobType == Job.REDUCE_JOB) {
                              // todo reduce
                             // 将文件写到 output-workid 文件中
+                        } else {
+                            shutdown = true;
                         }
                     } catch (IOException e) {
                         e.printStackTrace();
+                        shutdown = true;
                     }
                 }
             }

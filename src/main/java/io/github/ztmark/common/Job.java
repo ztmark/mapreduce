@@ -8,6 +8,7 @@ public class Job {
 
     public static final int MAP_JOB = 1;
     public static final int REDUCE_JOB = 2;
+    public static final int POISON = 3;
 
     private int jobType;
     private String arg;

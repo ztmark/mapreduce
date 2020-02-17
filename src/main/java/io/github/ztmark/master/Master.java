@@ -1,6 +1,5 @@
 package io.github.ztmark.master;
 
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -66,6 +65,7 @@ public class Master {
     }
 
     public Job fetchJob(String workId) {
+        final Job job = new Job();
         if (!toMapFile.isEmpty()) {
             String mapFile = null;
             final Iterator<String> iterator = toMapFile.iterator();
@@ -74,7 +74,6 @@ public class Master {
                 iterator.remove();
             }
             if (mapFile != null) {
-                final Job job = new Job();
                 job.setArg(mapFile);
                 job.setJobType(Job.MAP_JOB);
                 return job;
@@ -88,13 +87,13 @@ public class Master {
                 iterator.remove();
             }
             if (reduceFile != null) {
-                final Job job = new Job();
                 job.setArg(reduceFile);
                 job.setJobType(Job.REDUCE_JOB);
                 return job;
             }
         }
-        return new Job();
+        job.setJobType(Job.POISON);
+        return job;
     }
 
 }

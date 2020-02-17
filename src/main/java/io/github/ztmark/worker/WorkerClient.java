@@ -57,6 +57,15 @@ public class WorkerClient {
         logger.info("connect to master " + channelFuture.isSuccess());
     }
 
+    public void stop() {
+        if (channelFuture != null) {
+            channelFuture.cancel(true);
+        }
+        if (workerGroup != null) {
+            workerGroup.shutdownGracefully();
+        }
+    }
+
     public boolean register(String workerId) throws InterruptedException {
         final Registration registration = new Registration(workerId);
         return sendOneWayCommand(new Command(CommandCode.REGISTRATION, registration));
