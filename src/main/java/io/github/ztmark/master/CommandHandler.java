@@ -5,6 +5,7 @@ import java.util.logging.Logger;
 import io.github.ztmark.common.Command;
 import io.github.ztmark.common.CommandBody;
 import io.github.ztmark.common.CommandCode;
+import io.github.ztmark.common.DoneJob;
 import io.github.ztmark.common.FetchJob;
 import io.github.ztmark.common.FetchJobResp;
 import io.github.ztmark.common.HeartBeat;
@@ -42,8 +43,16 @@ public class CommandHandler extends SimpleChannelInboundHandler<Command> {
                 break;
             case CommandCode.FETCH_JOB:
                 processFetchJob(command, ctx);
+                break;
+            case CommandCode.DONE_JOB:
+                processDoneJob(command);
+                break;
 
         }
+    }
+
+    private void processDoneJob(Command command) {
+        master.doneJob((DoneJob) command.getBody());
     }
 
     public void processHeartBeat(HeartBeat heartBeat) {

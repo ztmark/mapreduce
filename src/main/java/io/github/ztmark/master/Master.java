@@ -8,7 +8,9 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentSkipListSet;
+import java.util.logging.Logger;
 
+import io.github.ztmark.common.DoneJob;
 import io.github.ztmark.common.Job;
 import io.netty.channel.Channel;
 
@@ -17,6 +19,8 @@ import io.netty.channel.Channel;
  * @Date : 2020/2/13
  */
 public class Master {
+
+    private Logger logger = Logger.getLogger(Master.class.getName());
 
     private MasterServer server;
     private Set<String> toMapFile;
@@ -66,6 +70,8 @@ public class Master {
 
     public Job fetchJob(String workId) {
         final Job job = new Job();
+        workingWorkers.add(workId);
+        idleWorkers.remove(workId);
         if (!toMapFile.isEmpty()) {
             String mapFile = null;
             final Iterator<String> iterator = toMapFile.iterator();
@@ -93,7 +99,32 @@ public class Master {
             }
         }
         job.setJobType(Job.POISON);
+        workingWorkers.remove(workId);
         return job;
+    }
+
+    public void doneJob(DoneJob doneJob) {
+        final String arg = doneJob.getArg();
+        if (arg != null && isValidJob(doneJob)) {
+            workingWorkers.remove(doneJob.getWorkerId());
+            idleWorkers.add(doneJob.getWorkerId());
+            final int jobType = doneJob.getJobType();
+            final Set<String> result = doneJob.getResult();
+            if (jobType == Job.MAP_JOB) {
+                mappingFile.remove(arg);
+                toReduceFile.addAll(result);
+            } else {
+                reducingFile.remove(arg);
+                resultFile.addAll(result);
+                if (toReduceFile.isEmpty() && reducingFile.isEmpty()) {
+                    done = true;
+                }
+            }
+        }
+    }
+
+    private boolean isValidJob(DoneJob job) {
+        return job.getJobType() == Job.MAP_JOB || job.getJobType() == Job.REDUCE_JOB;
     }
 
 }

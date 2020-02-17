@@ -37,6 +37,10 @@ public class Command {
                 break;
             case CommandCode.FETCH_JOB_RESP:
                 command.body = FetchJobResp.decode(byteBuf);
+                break;
+            case CommandCode.DONE_JOB:
+                command.body = DoneJob.decode(byteBuf);
+                break;
         }
         return command;
     }

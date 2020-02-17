@@ -13,4 +13,6 @@ public final class CommandCode {
     public static final int FETCH_JOB = 2;
     public static final int FETCH_JOB_RESP = 3;
 
+    public static final int DONE_JOB = 4;
+
 }

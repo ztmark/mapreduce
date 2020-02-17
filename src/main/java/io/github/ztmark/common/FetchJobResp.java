@@ -18,13 +18,16 @@ public class FetchJobResp implements CommandBody {
     }
 
     public static CommandBody decode(ByteBuf byteBuf) {
-        final Job job = new Job();
-        job.setJobType(byteBuf.readInt());
-        final int len = byteBuf.readableBytes();
-        if (len != 0) {
-            byte[] bytes = new byte[len];
-            byteBuf.readBytes(bytes);
-            job.setArg(new String(bytes, StandardCharsets.UTF_8));
+        Job job = null;
+        if (byteBuf.isReadable()) {
+            job = new Job();
+            job.setJobType(byteBuf.readInt());
+            final int len = byteBuf.readableBytes();
+            if (len != 0) {
+                byte[] bytes = new byte[len];
+                byteBuf.readBytes(bytes);
+                job.setArg(new String(bytes, StandardCharsets.UTF_8));
+            }
         }
         return new FetchJobResp(job);
     }

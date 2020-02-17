@@ -10,8 +10,10 @@ import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -23,6 +25,7 @@ import java.util.logging.Logger;
 import io.github.ztmark.MapReduce;
 import io.github.ztmark.common.Command;
 import io.github.ztmark.common.CommandCode;
+import io.github.ztmark.common.DoneJob;
 import io.github.ztmark.common.FetchJob;
 import io.github.ztmark.common.FetchJobResp;
 import io.github.ztmark.common.HeartBeat;
@@ -70,8 +73,10 @@ public class Worker {
                 try {
                     final Command command = client.fetchJob(new FetchJob(workerId));
                     logger.info("get job " + command);
-                    doTheJob(command);
-                    // todo call master job done
+                    final DoneJob doneJob = doTheJob(command);
+                    if (doneJob.getJobType() != Job.POISON) {
+                        client.sendDoneJob(doneJob);
+                    }
                     TimeUnit.SECONDS.sleep(3);
                 } catch (Exception e) {
                     logger.severe(e.getMessage());
@@ -85,25 +90,31 @@ public class Worker {
         }
     }
 
-    private void doTheJob(Command command) {
+    private DoneJob doTheJob(Command command) {
+        final DoneJob doneJob = new DoneJob();
+        doneJob.setWorkerId(workerId);
         if (command != null) {
             if (command.getCode() == CommandCode.FETCH_JOB_RESP) {
                 FetchJobResp jobResp = (FetchJobResp) command.getBody();
                 if (jobResp != null && jobResp.getJob() != null) {
                     final Job job = jobResp.getJob();
                     final int jobType = job.getJobType();
+                    doneJob.setArg(job.getArg());
+                    doneJob.setJobType(jobType);
                     try {
+                        Set<String> resultFile = new HashSet<>();
                         if (jobType == Job.MAP_JOB) {
                             final String content = readFile(job.getArg());
                             final List<KeyValue> result = mapReduce.map(job.getArg(), content);
                             // hash key 将相同hash值的写到 med-workid-hash 文件中
-                            writeInterMediateFile(result);
+                            resultFile.addAll(writeInterMediateFile(result));
                         } else if (jobType == Job.REDUCE_JOB) {
                              // todo reduce
                             // 将文件写到 output-workid 文件中
                         } else {
                             shutdown = true;
                         }
+                        doneJob.setResult(resultFile);
                     } catch (IOException e) {
                         e.printStackTrace();
                         shutdown = true;
@@ -111,9 +122,10 @@ public class Worker {
                 }
             }
         }
+        return doneJob;
     }
 
-    private void writeInterMediateFile(List<KeyValue> result) {
+    private Set<String> writeInterMediateFile(List<KeyValue> result) {
         Map<Integer, List<KeyValue>> map = new HashMap<>();
         for (KeyValue keyValue : result) {
             final int hash = hashHash(keyValue.getKey().hashCode());
@@ -121,8 +133,10 @@ public class Worker {
             list.add(keyValue);
         }
 
+        Set<String> resultFile = new HashSet<>();
         for (Map.Entry<Integer, List<KeyValue>> entry : map.entrySet()) {
             String filename = "im-out-" + workerId + "-" + entry.getKey();
+            resultFile.add(filename);
             final File file = new File(filename);
             try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file, true)))) {
 
@@ -135,6 +149,7 @@ public class Worker {
                 e.printStackTrace();
             }
         }
+        return resultFile;
     }
 
     private int hashHash(int hash) {

@@ -8,6 +8,7 @@ import java.util.logging.Logger;
 
 import io.github.ztmark.common.Command;
 import io.github.ztmark.common.CommandCode;
+import io.github.ztmark.common.DoneJob;
 import io.github.ztmark.common.FetchJob;
 import io.github.ztmark.common.HeartBeat;
 import io.github.ztmark.common.NamedThreadFactory;
@@ -77,6 +78,13 @@ public class WorkerClient {
 
     public Command fetchJob(FetchJob fetchJob) throws InterruptedException {
         return sendSyncCommand(new Command(CommandCode.FETCH_JOB, fetchJob));
+    }
+
+    public void sendDoneJob(DoneJob doneJob) throws InterruptedException {
+        int count = 5;
+        while (sendOneWayCommand(new Command(CommandCode.DONE_JOB, doneJob)) && --count > 0) {
+            TimeUnit.MILLISECONDS.sleep(100);
+        }
     }
 
     public void setResponse(Command command) {
