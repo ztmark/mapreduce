@@ -1,6 +1,8 @@
 package io.github.ztmark.master;
 
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -25,8 +27,8 @@ public class Master {
     private MasterServer server;
     private Set<String> toMapFile;
     private Set<String> mappingFile;
-    private Set<String> toReduceFile;
-    private Set<String> reducingFile;
+    private Map<String, List<String>> toReduceFile;
+    private Map<String, List<String>> reducingFile;
     private Set<String> resultFile;
     private int reduceNum;
     private volatile boolean done = false;
@@ -38,8 +40,8 @@ public class Master {
     public Master(List<String> files, int reduceNum) throws InterruptedException {
         toMapFile = new HashSet<>(files);
         mappingFile = new HashSet<>();
-        toReduceFile = new HashSet<>();
-        reducingFile = new HashSet<>();
+        toReduceFile = new HashMap<>();
+        reducingFile = new HashMap<>();
         resultFile = new HashSet<>();
         this.reduceNum = reduceNum;
         workers = new ConcurrentHashMap<>();
@@ -86,14 +88,15 @@ public class Master {
             }
         }
         if (mappingFile.isEmpty() && !toReduceFile.isEmpty()) {
-            String reduceFile = null;
-            final Iterator<String> iterator = toReduceFile.iterator();
+            Map.Entry<String, List<String>> entry = null;
+            final Iterator<Map.Entry<String, List<String>>> iterator = toReduceFile.entrySet().iterator();
             if (iterator.hasNext()) {
-                reduceFile = iterator.next();
+                entry = iterator.next();
                 iterator.remove();
             }
-            if (reduceFile != null) {
-                job.setArg(reduceFile);
+            if (entry != null) {
+                reducingFile.put(entry.getKey(), entry.getValue());
+                job.setArg(entry.getKey() + ":" + String.join(";", entry.getValue()));
                 job.setJobType(Job.REDUCE_JOB);
                 return job;
             }
@@ -112,9 +115,15 @@ public class Master {
             final Set<String> result = doneJob.getResult();
             if (jobType == Job.MAP_JOB) {
                 mappingFile.remove(arg);
-                toReduceFile.addAll(result);
+                for (String s : result) {
+                    final String[] split = s.split("-");
+                    String key = split[split.length - 1];
+                    final List<String> values = toReduceFile.computeIfAbsent(key, v -> new ArrayList<>());
+                    values.add(s);
+                }
             } else {
-                reducingFile.remove(arg);
+                final String[] split = arg.split(":");
+                reducingFile.remove(split[0]);
                 resultFile.addAll(result);
                 if (toReduceFile.isEmpty() && reducingFile.isEmpty()) {
                     done = true;

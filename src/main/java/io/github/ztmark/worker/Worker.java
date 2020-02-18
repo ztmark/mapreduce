@@ -99,18 +99,20 @@ public class Worker {
                 if (jobResp != null && jobResp.getJob() != null) {
                     final Job job = jobResp.getJob();
                     final int jobType = job.getJobType();
-                    doneJob.setArg(job.getArg());
                     doneJob.setJobType(jobType);
                     try {
                         Set<String> resultFile = new HashSet<>();
                         if (jobType == Job.MAP_JOB) {
-                            final String content = readFile(job.getArg());
+                            doneJob.setArg(job.getArg());
+                            final String content = String.join(System.lineSeparator(), readFile(job.getArg()));
                             final List<KeyValue> result = mapReduce.map(job.getArg(), content);
                             // hash key 将相同hash值的写到 med-workid-hash 文件中
                             resultFile.addAll(writeInterMediateFile(result));
                         } else if (jobType == Job.REDUCE_JOB) {
-                             // todo reduce
                             // 将文件写到 output-workid 文件中
+                            final String[] args = job.getArg().split(":");
+                            doneJob.setArg(args[0]);
+                            resultFile.addAll(doReduce(args[1].split(";")));
                         } else {
                             shutdown = true;
                         }
@@ -123,6 +125,31 @@ public class Worker {
             }
         }
         return doneJob;
+    }
+
+    private List<String> doReduce(String[] filenames) throws IOException {
+        List<String> result = new ArrayList<>();
+        final List<String> lines = new ArrayList<>();
+        for (String filename : filenames) {
+            lines.addAll(readFile(filename));
+        }
+        Map<String, List<String>> map = new HashMap<>();
+        for (String line : lines) {
+            final String[] s = line.split(" ");
+            if (s.length == 2) {
+                final List<String> values = map.computeIfAbsent(s[0], v -> new ArrayList<>());
+                values.add(s[1]);
+            }
+        }
+        File file = new File("output-" + workerId);
+        try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file, true)))) {
+            for (Map.Entry<String, List<String>> entry : map.entrySet()) {
+                final String reduce = mapReduce.reduce(entry.getKey(), entry.getValue());
+                writer.append(String.format("%s %s", entry.getKey(), reduce));
+                writer.newLine();
+            }
+        }
+        return result;
     }
 
     private Set<String> writeInterMediateFile(List<KeyValue> result) {
@@ -156,14 +183,14 @@ public class Worker {
         return Math.abs(hash % 5);
     }
 
-    private String readFile(String filename) throws IOException {
+    private List<String> readFile(String filename) throws IOException {
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(filename)))) {
-            StringBuilder sb = new StringBuilder();
+            List<String> lines = new ArrayList<>();
             String line;
             while ((line = reader.readLine()) != null) {
-                sb.append(line);
+                lines.add(line.trim());
             }
-            return sb.toString();
+            return lines;
         }
     }
 
