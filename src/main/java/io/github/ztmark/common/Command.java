@@ -42,6 +42,7 @@ public class Command {
                 command.body = DoneJob.decode(byteBuf);
                 break;
         }
+        byteBuf.release();
         return command;
     }
 
