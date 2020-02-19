@@ -2,7 +2,6 @@ package io.github.ztmark.worker;
 
 import io.github.ztmark.common.Command;
 import io.github.ztmark.common.CommandCode;
-import io.github.ztmark.common.FetchJobResp;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 
@@ -15,6 +14,7 @@ public class ClientCommandHandler extends SimpleChannelInboundHandler<Command> {
     private WorkerClient client;
 
     public ClientCommandHandler(WorkerClient client) {
+        super(true);
         this.client = client;
     }
 

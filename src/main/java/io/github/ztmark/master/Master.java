@@ -27,8 +27,8 @@ public class Master {
     private MasterServer server;
     private Set<String> toMapFile;
     private Set<String> mappingFile;
-    private Map<String, List<String>> toReduceFile;
-    private Map<String, List<String>> reducingFile;
+    private Map<String, Set<String>> toReduceFile;
+    private Map<String, Set<String>> reducingFile;
     private Set<String> resultFile;
     private int reduceNum;
     private volatile boolean done = false;
@@ -88,8 +88,8 @@ public class Master {
             }
         }
         if (mappingFile.isEmpty() && !toReduceFile.isEmpty()) {
-            Map.Entry<String, List<String>> entry = null;
-            final Iterator<Map.Entry<String, List<String>>> iterator = toReduceFile.entrySet().iterator();
+            Map.Entry<String, Set<String>> entry = null;
+            final Iterator<Map.Entry<String, Set<String>>> iterator = toReduceFile.entrySet().iterator();
             if (iterator.hasNext()) {
                 entry = iterator.next();
                 iterator.remove();
@@ -118,7 +118,7 @@ public class Master {
                 for (String s : result) {
                     final String[] split = s.split("-");
                     String key = split[split.length - 1];
-                    final List<String> values = toReduceFile.computeIfAbsent(key, v -> new ArrayList<>());
+                    final Set<String> values = toReduceFile.computeIfAbsent(key, v -> new HashSet<>());
                     values.add(s);
                 }
             } else {

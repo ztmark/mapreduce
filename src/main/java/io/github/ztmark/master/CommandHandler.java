@@ -25,6 +25,7 @@ public class CommandHandler extends SimpleChannelInboundHandler<Command> {
     private Master master;
 
     public CommandHandler(Master master) {
+        super(true);
         this.master = master;
     }
 
