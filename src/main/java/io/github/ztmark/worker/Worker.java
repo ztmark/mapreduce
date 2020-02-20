@@ -8,13 +8,14 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.UUID;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
@@ -50,7 +51,7 @@ public class Worker {
 
     private volatile boolean shutdown = false;
 
-    public Worker(MapReduce mapReduce) throws InterruptedException {
+    public Worker(MapReduce mapReduce) throws InterruptedException, UnknownHostException {
         workerId = generateId();
         this.mapReduce = mapReduce;
         this.client = new WorkerClient();
@@ -180,7 +181,8 @@ public class Worker {
     }
 
     private int hashHash(int hash) {
-        return Math.abs(hash % 5);
+        hash = Math.max(0, Math.abs(hash));
+        return hash % 5;
     }
 
     private List<String> readFile(String filename) throws IOException {
@@ -195,8 +197,10 @@ public class Worker {
     }
 
 
-    private String generateId() {
-        return UUID.randomUUID().toString().replaceAll("-", "");
+    private String generateId() throws UnknownHostException {
+        final int port = 8800;
+        final String hostString = InetAddress.getLocalHost().getHostAddress();
+        return hostString.replaceAll("\\.", "_") + "_" + port;
     }
 
 }
