@@ -1,5 +1,6 @@
 package io.github.ztmark;
 
+import java.net.UnknownHostException;
 import java.util.ServiceLoader;
 
 import io.github.ztmark.worker.Worker;
@@ -10,7 +11,7 @@ import io.github.ztmark.worker.Worker;
  */
 public class WorkerMain {
 
-    public static void main(String[] args) throws InterruptedException {
+    public static void main(String[] args) throws InterruptedException, UnknownHostException {
         MapReduce mapReduce = null;
         final ServiceLoader<MapReduce> load = ServiceLoader.load(MapReduce.class, Thread.currentThread().getContextClassLoader());
         for (MapReduce reduce : load) {
@@ -19,5 +20,6 @@ public class WorkerMain {
         }
         final Worker worker = new Worker(mapReduce);
         worker.start();
+
     }
 }
